@@ -1,43 +1,61 @@
-exports.init = function(HID){
-  / NodeJS includes
-var sys = require('sys');
-var fs = require('fs');
-// Stores the RFID id as it reconstructs from the stream.
-var id = '';
-// List of all RFID ids read
-var ids = [];
-// ARGUMENT 1:
-// Stream path, unique to your hardware.
-// List your available USB serial streams via terminal and choose one:
-//   ls /dev | grep usb
-// Had trouble with TTY, so used CU.
-// ARGUMENT 2:
-// Simplifies restruction of stream if one bit comes at a time.
-// However, I don't know if or how this setting affects performance.
-fs.createReadStream('/dev/usb/hiddev0', { bufferSize: 1 })
-.on('open', function(fd) {
-sys.puts('Begin scanning RFID tags.');
-})
-.on('end', function() {
-sys.puts('End of data stream.');
-})
-.on('close', function() {
-sys.puts('Closing stream.');
-})
-.on('error', function(error) {
-sys.debug(error);
-})
-.on('data', function(chunk) {
-	chunk = chunk.toString('ascii').match(/\w*/)[0]; // Only keep hex chars
-if ( chunk.length == 0 ) { // Found non-hex char
-if ( id.length > 0 ) { // The ID isn't blank
-ids.push(id); // Store the completely reconstructed ID
-sys.puts(id);
-		}
-		id = ''; // Prepare for the next ID read
-return;
-	}
-	id += chunk; // Concat hex chars to the forming ID
-});
+/**
+ * Requires
+ */
+var HID = require('node-hid'),
+    events = require('events');
 
+var keyEvents = [],
+    keyMapper = {
+        57: 0, 48: 1, 49: 2, 50: 3, 51: 4,
+        52: 5, 53: 6, 54: 7, 55: 8, 56: 9 };
+
+var RFID = function(deviceId, vendorId) {
+    this.deviceId = deviceId,
+    this.vendorId = vendorId;
+    this.device = null;
+    this.rfidInterface = null;
+    this.callbacks = {
+        read: null
+    };
+    instance = this;
 };
+
+RFID.prototype = new events.EventEmitter();
+
+RFID.prototype.listen = function() {
+    var error, devices;
+
+    devices = new HID.devices();
+
+    if (devices.length > 0) {
+        this.device = devices[0];
+    }
+
+    this.read();
+
+    return this;
+};
+
+RFID.prototype.read = function() {
+    var _this = this,
+        keyEvents = [],
+        id,
+        onRead = function(error, data) {
+            if (data[2] !== 0 && data[2] !== 88) {
+                keyEvents.push(keyMapper[parseInt(data[2], 16)]);
+                _this.emit('input', data[2]);
+            } else if (data[2] === 88) {
+                id = parseInt(keyEvents.join(''), 10);
+                _this.emit('scan', id);
+                keyEvents = [];
+            }
+
+            if (data[2] !== 56)
+                _this.rfidInterface.read(onRead);
+        };
+
+    this.rfidInterface = new HID.HID(this.device.path);
+    this.rfidInterface.read(onRead);
+};
+
+module.exports = RFID;
