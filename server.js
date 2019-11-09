@@ -23,6 +23,10 @@ app.use("*",function(req,res){
 app.listen(3000,function(){
   console.log("Live at Port 3000");
   HID.setDriverType('libusb');
-  RFID.init(HID);
+
+  var devices = HID.devices()
+  devices.forEach(function(item) {
+    console.log("p: " + item.productId + " v: "+ item.vendorId)});
+    RFID.init(HID);
 
 });
