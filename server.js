@@ -3,6 +3,7 @@ var app = express();
 var router = express.Router();
 var path = __dirname + '/views/';
 var HID = require("node-hid");
+var RFID = require('./services/RFID.js');
 
 router.use(function (req,res,next) {
   console.log("/" + req.method);
@@ -22,10 +23,6 @@ app.use("*",function(req,res){
 app.listen(3000,function(){
   console.log("Live at Port 3000");
   HID.setDriverType('libusb');
-
-  var devices = HID.devices()
-  devices.forEach(function(item) {
-    console.log("p: " + item.productId + " v: "+ item.vendorId)});
-
+  RFID.init(HID);
 
 });
