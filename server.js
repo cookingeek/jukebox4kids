@@ -28,13 +28,7 @@ app.listen(3000,function(){
   devices.forEach(function(item) {
     console.log("p: " + item.productId + " v: "+ item.vendorId);
 
-    var rfid = new RFID(item.productId, item.vendorId).listen();
 });
-    rfid.on('scan', function(data) {
-        console.log('scan', data);
-    });
+var rfid = RFID.init(HID);
 
-    rfid.on('input', function(data) {
-        console.log('input', data);
-    });
 });
