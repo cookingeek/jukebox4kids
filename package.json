@@ -1,0 +1,17 @@
+{
+  "name": "jukebox4kids",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.17.1",
+    "node-hid": "^0.7.9",
+    "node-hid-stream": "^1.1.0",
+    "nosql": "^6.1.0"
+  }
+}
